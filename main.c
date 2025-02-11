@@ -285,7 +285,6 @@ int main(void)
             printf("%dマス進みます\n", steps);
             pos[i] += steps;
             dice[i] = 2;
-            freeze[i] = 0;
             evaluate_square(i, dice, pos, freeze, stage);
         }
     }
