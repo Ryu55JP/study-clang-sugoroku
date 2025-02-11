@@ -1,16 +1,19 @@
+// C言語を使ったすごろくゲーム
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
 
+// ゴールまでのマスの数
 #define MAX_SQUARE 100
 
 // TODO: プレイヤーを構造体で作成し、4要素の1次元配列に格納する
 
-// 1〜4人の整数でプレイヤー数の指定をおこなう
+// 操作プレイヤー数の指定（1〜4人）
 int select_num_players(int *mode_debug)
 {
     int num_players;
-
+    // 1~4あるいは914の整数をプレイヤーに入力してもらう
     do
     {
         printf("プレイヤー数を選択 【1~4】: ");
@@ -21,6 +24,7 @@ int select_num_players(int *mode_debug)
         }
     } while (num_players < 1 || (4 < num_players && num_players < 914) || 914 < num_players);
 
+    // 914が入力された場合、操作プレイヤーは1人としてデバッグモードに入れるようにする
     if (num_players == 914)
     {
         num_players = *mode_debug = 1;
@@ -29,13 +33,15 @@ int select_num_players(int *mode_debug)
     return num_players;
 }
 
-// 進むマスを選択
+// 何マス進むかを選択
 int input_steps(int sum_dice)
 {
     int steps = 0;
 
+    // サイコロの数が0の場合（1回休み）なにもしない
     if (sum_dice)
     {
+        // 0~サイコロの出目の合計の整数をプレイヤーに入力してもらう
         do
         {
             printf("最大%dマス進めます。\n\n何マス進みますか？ 【0~%d】: ", sum_dice, sum_dice);
@@ -50,7 +56,7 @@ int input_steps(int sum_dice)
     return steps;
 }
 
-// マスに対してユニークに属性をつける
+// 重複を防ぎつつ、効果付きのマスを指定する
 void assign_unique_random(int *sq, int count, int *used) {
     int num;
     for (int i = 0; i < count; i++) {
@@ -71,15 +77,16 @@ void set_stage(int *stage)
         flag = 1;
     }
 
+    // それぞれの効果マスの数を指定
     int sqnum_move = MAX_SQUARE / 4;
     int sqnum_freeze = MAX_SQUARE / 4;
     int sqnum_dice = MAX_SQUARE / 10;
 
-    int sq_move[MAX_SQUARE/4] = {0};
-    int sq_freeze[MAX_SQUARE/4] = {0};
-    int sq_dice[MAX_SQUARE/4] = {0};
-    int sq_restart[1] = {0};
-    int used[MAX_SQUARE] = {0};  // 使用済みチェック用配列
+    int sq_move[MAX_SQUARE / 4] = {0};
+    int sq_freeze[MAX_SQUARE / 4] = {0};
+    int sq_dice[MAX_SQUARE / 10] = {0};
+    int sq_restart[1] = {0};    // 振り出しにもどるマスは1つのみ
+    int used[MAX_SQUARE] = {0};  // 使用済みマスチェック用の配列
 
     // 変更するマスの番号を選択
     // 移動マス
@@ -91,7 +98,7 @@ void set_stage(int *stage)
     // 振り出しにもどるマス
     assign_unique_random(sq_restart, 1, used);
 
-    // マスの番号を変更
+    // マスの番号を変更（1: 移動　2: 休み　3: サイコロ数変更　4: 振り出しに戻る）
     for (int i = 0; i < sqnum_move; i++)
     {
         stage[sq_move[i]] = 1;
