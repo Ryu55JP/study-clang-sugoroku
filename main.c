@@ -127,11 +127,11 @@ void print_stage(int *pos, int max_square)
     printf("|GOAL|\n\n");
 }
 
-// プレイヤーの現在地から４つ先までのマスの内容を出力
+// プレイヤーの現在地から6つ先までのマスの内容を出力
 void print_stage_forward(int pos, int *stage)
 {
-    printf("先の4マス（□は何もなし　■はなにかあるかも）\n");
-    for (int i = pos; i < pos + 4; i++)
+    printf("先の6マス（□は何もなし　■はなにかあるかも）\n");
+    for (int i = pos; i < pos + 6; i++)
     {
         if (i >= MAX_SQUARE)
         {
