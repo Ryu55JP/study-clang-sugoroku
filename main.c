@@ -8,7 +8,7 @@
 
 
 // 1〜4人の整数でプレイヤー数の指定をおこなう
-int select_num_players()
+int select_num_players(int *mode_debug)
 {
     int num_players;
 
@@ -16,11 +16,16 @@ int select_num_players()
     {
         printf("プレイヤー数を選択 【1~4】: ");
         scanf("%d", &num_players);
-        if (num_players < 1 || num_players > 4)
+        if (num_players < 1 || (4 < num_players && num_players < 914) || 914 < num_players)
         {
             printf("1~4の整数で入力してください\n\n");
         }
-    } while (num_players < 1 || num_players > 4);
+    } while (num_players < 1 || (4 < num_players && num_players < 914) || 914 < num_players);
+
+    if (num_players == 914)
+    {
+        num_players = *mode_debug = 1;
+    }
 
     return num_players;
 }
@@ -74,6 +79,7 @@ void set_stage(int *stage)
     int sq_move[MAX_SQUARE/4] = {0};
     int sq_freeze[MAX_SQUARE/4] = {0};
     int sq_dice[MAX_SQUARE/4] = {0};
+    int sq_restart[1] = {0};
     int used[MAX_SQUARE] = {0};  // 使用済みチェック用配列
 
     // 変更するマスの番号を選択
@@ -83,6 +89,8 @@ void set_stage(int *stage)
     assign_unique_random(sq_freeze, sqnum_freeze, used);
     // サイコロマス
     assign_unique_random(sq_dice, sqnum_dice, used);
+    // 振り出しにもどるマス
+    assign_unique_random(sq_restart, 1, used);
 
     // マスの番号を変更
     for (int i = 0; i < sqnum_move; i++)
@@ -97,6 +105,7 @@ void set_stage(int *stage)
     {
         stage[sq_dice[i]] = 3;
     }
+    stage[sq_restart[0]] = 4;
 }
 
 // デバッグ用：ステージのマスを全て出力
@@ -187,11 +196,11 @@ void evaluate_square(int player, int *dice, int *pos, int *freeze, int *stage)
         if (move_step > 3)
         {
             move_step -= 7;
-            printf("%dマスもどる", move_step * -1);
+            printf("%dマスもどる\n", move_step * -1);
         }
         else
         {
-            printf("%dマス進む", move_step);
+            printf("%dマス進む\n", move_step);
         }
         pos[player] = pos[player] + move_step < 0 ? 0 : pos[player] + move_step;
     }
@@ -199,7 +208,10 @@ void evaluate_square(int player, int *dice, int *pos, int *freeze, int *stage)
     {
         freeze[player] ^= 1;
         if (freeze[player])
+        {
             dice[player] = 0;
+            printf("1回休み\n");
+        }
     }
     else if (stage[pos[player]] == 3)   // サイコロマスに止まった場合
     {
@@ -214,6 +226,11 @@ void evaluate_square(int player, int *dice, int *pos, int *freeze, int *stage)
             dice[player]--;
             printf("次のターンサイコロが1つに\n");
         }
+    }
+    else if (stage[pos[player]] == 4)   // 振り出しにもどるマスに止まった場合
+    {
+        pos[player] = 0;
+        printf("\n\n振り出しにもどる……！！\n\n");
     }
     else
     {
@@ -234,13 +251,9 @@ void comfirm_res(void)
 
 int main(void)
 {
-    static int flag;
-    if (flag == 0) {
-        srand((unsigned int)time(NULL));
-        flag = 1;
-    }
+    srand((unsigned int)time(NULL));
 
-    int mode_debug = 1;
+    int mode_debug = 0;
 
     int num_players;
     int steps;
@@ -253,12 +266,16 @@ int main(void)
     int turn = 0;
 
     printf("=== すごろく ===\n");
-    num_players = select_num_players();
+    num_players = select_num_players(&mode_debug);
 
     set_stage(stage);
 
     if(mode_debug)
+    {
+        printf("デバッグモードで起動します\n");
         print_stage_all(MAX_SQUARE, stage);
+        comfirm_res();
+    }
 
     // pos[i] が MAX_SQUARE 以上になるまでループ
     while (pos[0] < MAX_SQUARE && pos[1] < MAX_SQUARE && pos[2] < MAX_SQUARE && pos[3] < MAX_SQUARE)
@@ -274,7 +291,6 @@ int main(void)
             printf("%dマス進みます\n", steps);
             pos[i] += steps;
             dice[i] = 2;
-            freeze[i] = 0;
             evaluate_square(i, dice, pos, freeze, stage);
             comfirm_res();
         }
