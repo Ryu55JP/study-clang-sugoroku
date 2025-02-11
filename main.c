@@ -6,7 +6,6 @@
 
 // TODO: プレイヤーを構造体で作成し、4要素の1次元配列に格納する
 
-
 // 1〜4人の整数でプレイヤー数の指定をおこなう
 int select_num_players(int *mode_debug)
 {
