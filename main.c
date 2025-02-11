@@ -72,8 +72,8 @@ void set_stage(int *stage)
         flag = 1;
     }
 
-    int sqnum_move = MAX_SQUARE / 5;
-    int sqnum_freeze = MAX_SQUARE / 5;
+    int sqnum_move = MAX_SQUARE / 4;
+    int sqnum_freeze = MAX_SQUARE / 4;
     int sqnum_dice = MAX_SQUARE / 10;
 
     int sq_move[MAX_SQUARE/4] = {0};
@@ -136,11 +136,12 @@ void print_stage(int *pos, int max_square)
     printf("|GOAL|\n\n");
 }
 
-// プレイヤーの現在地から6つ先までのマスの内容を出力
-void print_stage_forward(int pos, int *stage)
+// プレイヤーの現在地からサイコロの目の8割先までのマスの内容を出力
+void print_stage_forward(int pos, int sum_dice, int *stage)
 {
-    printf("先の6マス（□は何もなし　■はなにかあるかも）\n");
-    for (int i = pos; i < pos + 6; i++)
+    int num_block = sum_dice * 4 / 5;
+    printf("先の%dマス（□: 何もなし　■: なにかが起こる）\n", num_block);
+    for (int i = pos + 1; i < pos + 1 + num_block; i++)
     {
         if (i >= MAX_SQUARE)
         {
@@ -212,6 +213,10 @@ void evaluate_square(int player, int *dice, int *pos, int *freeze, int *stage)
             dice[player] = 0;
             printf("1回休み\n");
         }
+        else
+        {
+            printf("お休み中です zzz……\n");
+        }
     }
     else if (stage[pos[player]] == 3)   // サイコロマスに止まった場合
     {
@@ -230,7 +235,7 @@ void evaluate_square(int player, int *dice, int *pos, int *freeze, int *stage)
     else if (stage[pos[player]] == 4)   // 振り出しにもどるマスに止まった場合
     {
         pos[player] = 0;
-        printf("\n\n振り出しにもどる……！！\n\n");
+        printf("\n\n                 振り出しにもどる……！！\n\n");
     }
     else
     {
@@ -243,7 +248,7 @@ void comfirm_res(void)
     int flag = 0;
     do
     {
-        printf("結果が確認できたら 1 を入力してください: ");
+        printf("\n結果が確認できたら 1 を入力してください: ");
         scanf("%d", &flag);
     } while (flag == 0);
 }
@@ -256,6 +261,7 @@ int main(void)
     int mode_debug = 0;
 
     int num_players;
+    int sum_dice;
     int steps;
 
     int dice[4] = {2, 2, 2, 2};
@@ -285,42 +291,45 @@ int main(void)
         print_stage(pos, MAX_SQUARE);
         for (int i = 0; i < num_players; i++)
         {
-            printf("\nプレイヤー%dの番です\n", i + 1);
-            print_stage_forward(pos[i] + 1, stage);
-            steps = input_steps(roll_dice(dice[i]));
-            printf("%dマス進みます\n", steps);
+            printf("\nPLAYER%dの番です ( %d / %d )\n", i + 1, pos[i], MAX_SQUARE);
+            sum_dice = roll_dice(dice[i]);
+            print_stage_forward(pos[i], sum_dice, stage);
+            steps = input_steps(sum_dice);
             pos[i] += steps;
+            printf("%dマス進みます\n\n", steps);
             dice[i] = 2;
             evaluate_square(i, dice, pos, freeze, stage);
             comfirm_res();
         }
+        printf("\n*******************************************\n");
         for (int i = num_players; i < 4; i++)
         {
-            printf("\nCOM%dの番です\n", i - num_players + 1);
+            printf("\nCOM%d ( %d / %d )\n", i - num_players + 1, pos[i], MAX_SQUARE);
             steps = roll_dice(dice[i]);
-            printf("%dマス進みます\n", steps);
+            printf("%dマス進みました\n", steps);
             pos[i] += steps;
             dice[i] = 2;
             evaluate_square(i, dice, pos, freeze, stage);
         }
     }
 
-    printf("\n\n----------------------------------------\n最終結果");
+    printf("\n\n*******************************************\n最終結果\n");
     print_stage(pos, MAX_SQUARE);
     for (int i = 0; i < num_players; i++)
     {
         if (pos[i] >= MAX_SQUARE)
-            printf("プレイヤー%dはゴールしました！\n", i + 1);
+            printf("PLAYER%d : ゴールしました！！\n", i + 1);
         else
-            printf("プレイヤー%dはゴールまであと%dマスでした\n", i + 1, MAX_SQUARE - pos[i]);
+            printf("PLAYER%d : あと %3d マスでした\n", i + 1, MAX_SQUARE - pos[i]);
     }
     for (int i = 0; i < 4 - num_players; i++)
     {
         if (pos[i + num_players] >= MAX_SQUARE)
-            printf("COM%dはゴールしました！\n", i + 1);
+            printf("COM%d    : ゴールしました！！\n", i + 1);
         else
-            printf("COM%dはゴールまであと%dマスでした\n", i + 1, MAX_SQUARE - pos[i + num_players]);
+            printf("COM%d    : あと %3d マスでした\n", i + 1, MAX_SQUARE - pos[i + num_players]);
     }
+    printf("\n*******************************************\nThank you!\n\n");
 
     return 0;
 }
